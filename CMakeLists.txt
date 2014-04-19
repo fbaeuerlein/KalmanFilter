@@ -1,5 +1,10 @@
 project(KFDemo)
 cmake_minimum_required(VERSION 2.8)
+find_package( OpenCV REQUIRED )
+if(CMAKE_COMPILER_IS_GNUCXX)
+    add_definitions(-std=c++11)
+endif()
 aux_source_directory(. SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
+target_link_libraries( KFDemo ${OpenCV_LIBS} )
 
