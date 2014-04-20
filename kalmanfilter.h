@@ -32,24 +32,25 @@ public:
      * @param H transformation matrix of state space to measurement space
      * @param t threshold for gating
      */
-    KalmanFilter(const StateMatrix & F, const StateMatrix & Q,
+    KalmanFilter(const MeasurementSpaceVector & measurement, const StateMatrix & F, const StateMatrix & Q,
                   const MeasurementMatrix & R, const MeasurementStateConversionMatrix & H,
                   const double t = 1e-20)
         : _F(F), _Q(Q), _R(R), _H(H), _gatingThreshold(t)
     {
         _HT = H.transpose();
-       reset();
-    }
 
-    /**
-     * @brief reset state, prediction and prediction covariance
-     */
-    void reset()
-    {
         _x_k1 = _prediction = StateSpaceVector::Zero();
         _s_det_for_gating = 0;
        _P_k1 = StateMatrix::Zero();
-       _S_inverse = MeasurementMatrix::Zero();
+       _S_inverse = _S = MeasurementMatrix::Zero();
+
+       // create new S matrix for gating/likelihood
+       _S = _R;
+
+        _x_k1 = _HT * measurement;
+        _prediction = _F * _x_k1;
+
+        _my_id = _id++;
     }
 
     /**
@@ -134,7 +135,10 @@ public:
         return (likelihood(m) > _gatingThreshold);
     }
 
-
+    const size_t id() const
+    {
+        return _my_id;
+    }
 
 private:
 
@@ -157,7 +161,13 @@ private:
     double _s_det_for_gating;
 
     MeasurementStateConversionMatrixTransposed _HT;
+
+    size_t _my_id;
+
+    static size_t _id;
 };
 
+template<size_t StateDim, size_t MeasurementDim>
+size_t KalmanFilter<StateDim, MeasurementDim>::_id = 0;
 
 #endif // KALMANFILTER_H

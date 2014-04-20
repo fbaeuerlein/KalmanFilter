@@ -59,7 +59,6 @@ int main()
             .5, 1.).finished();
 
     // initialize filter with matrices
-    KF filter(F, Q, R, H);
 
     namedWindow( "Kalman Demo", CV_WINDOW_AUTOSIZE );
 
@@ -70,21 +69,24 @@ int main()
 
     bool reset = true;
 
+    KF filter = KF(Measurement(0, 0), F, Q, R, H);
+
     while ( cv::waitKey(30) )
     {
         Mat img(480, 640, CV_8UC3, Scalar(255, 255, 255));
 
+        const Measurement x(m[0], m[1]);
+
         // reset filter if nothings incoming from callback handler
         if ( m[0] == -1 && m[1] == -1 && reset != true )
-        {
             reset = true;
-            filter.reset();
-            std::cerr << "resetting filter ..." << std::endl;
-        }
 
         if ( m[0] != -1 && m[1] != -1 && reset == true)
         {
             reset = false;
+            filter = KF(x, F, Q, R, H);
+
+            continue;
         }
 
         // if something's incoming from callback handler
@@ -93,7 +95,6 @@ int main()
             reset = false;
 
             // update filter with mouse coordinates
-            const Measurement x(m[0], m[1]);
             filter.update(x);
 
             // draw mouse position
